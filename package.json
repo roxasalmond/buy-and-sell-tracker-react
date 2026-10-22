@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rules": "vitest run --config vitest.rules.config.ts",
     "emulators": "firebase emulators:start --only auth,database --project demo-buy-sell",
     "seed": "node scripts/seed-emulator.mjs",
     "dev:emulator": "vite --mode emulator"

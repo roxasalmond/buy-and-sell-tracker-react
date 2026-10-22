@@ -152,7 +152,7 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
         {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} actions={installmentActions} />}
         {tab === "funds" && <FundsTable rows={rowsOf(funds)} actions={cashActions} saleUndo={saleUndoActions} />}
         {tab === "remits" && <RemitsTable rows={rowsOf(remits)} actions={cashActions} />}
-        {tab === "sold" && <SoldTable rows={rowsOf(sold)} undo={saleUndoActions} />}
+        {tab === "sold" && <SoldTable rows={rowsOf(sold)} undo={saleUndoActions} edit={unitActions} />}
         <Pagination
           page={page}
           pageSize={pageSize}

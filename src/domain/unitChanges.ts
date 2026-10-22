@@ -6,8 +6,11 @@
  *            inventory can never drift apart (the live app only changed the unit)
  *   delete   unit and expense are soft-deleted together: the money goes back to the fund
  *   restore  both come back; an expense deleted on its own earlier stays deleted
- * A unit that is sold or on an installment plan is refused: undo the sale (or delete the
- * plan) first, so no income or fund-return rows are left behind.
+ * Delete and restore only work on units in stock: for a sold unit, undo the sale first
+ * (or delete the plan), so no income or fund-return rows are left behind.
+ * Edit also works on sold units, but only for descriptive fields (name, category, IMEI,
+ * condition, date, suggested price, photo): cost and sold price are locked because the
+ * sale's income and fund-return rows are built from them.
  */
 import { round2 } from "../lib/money";
 import { isValidDateString } from "./cashEntry";
@@ -23,6 +26,18 @@ type ExpenseRecord = Expense & { key: string };
 function expensesOf(unit: UnitRecord, records: readonly { type: string }[]): ExpenseRecord[] {
   return (records as readonly (ExpenseRecord | { type: string })[]).filter(
     (r): r is ExpenseRecord => r.type === "expense" && (r as ExpenseRecord).unitId === unit.key,
+  );
+}
+
+type NamedRow = { key: string; unitName: string };
+
+/** Plan, income and fund-return rows that carry the unit's name. */
+function namedRowsOf(unit: UnitRecord, records: readonly { type: string }[]): NamedRow[] {
+  return (records as readonly (NamedRow & { type: string; unitId?: string })[]).filter(
+    (r) =>
+      (r.type === "installment" || r.type === "income" || r.type === "fund-return") &&
+      r.unitId === unit.key &&
+      typeof r.unitName === "string",
   );
 }
 
@@ -45,6 +60,8 @@ function stockRefusal(unit: UnitRecord, verb: string): Refusal | null {
 }
 
 export interface EditUnitInput {
+  /** A new photo (already uploaded). Leave out to keep the current one. */
+  photoURL?: string | undefined;
   name: string;
   category: string;
   condition: string;
@@ -56,6 +73,8 @@ export interface EditUnitInput {
 
 export interface UnitEditResult {
   unitPatch: Patch<Unit>;
+  /** A rename also renames the unit on its plan and sale rows, so every tab shows the same name. */
+  nameDisplayPatches: Patch<Record<string, unknown>>[];
   /** Present when the unit's expense has to follow a change of cost, date or name. */
   expensePatch?: Patch<Expense>;
 }
@@ -67,8 +86,8 @@ export function planEditUnit(
   ctx: WriteContext,
 ): PlanResult<UnitEditResult> {
   if (unit.deleted) return refuse("unit-deleted", "This unit is deleted. Restore it before editing.");
-  const stock = stockRefusal(unit, "edited");
-  if (stock) return stock;
+  const status = effectiveStatus(unit);
+  const moneyLocked = status !== "in-stock";
 
   const name = input.name.trim();
   if (!name) return refuse("invalid-input", "Please enter the unit name.");
@@ -89,6 +108,16 @@ export function planEditUnit(
   const cost = round2(input.cost);
   const suggestedPrice = round2(input.suggestedPrice);
 
+  if (moneyLocked && cost !== unit.cost) {
+    return refuse(
+      status === "sold" ? "already-sold" : "installment-money-locked",
+      status === "sold"
+        ? "This unit is sold, so its cost cannot be changed here. Undo the sale first, then edit it."
+        : "This unit is on an installment plan, so its cost cannot be changed here.",
+    );
+  }
+  const newPhoto = input.photoURL !== undefined && input.photoURL !== unit.photoURL ? input.photoURL : undefined;
+
   const unchanged =
     name === unit.name &&
     input.category === unit.category &&
@@ -96,7 +125,8 @@ export function planEditUnit(
     imei === unit.imei &&
     input.date === unit.date &&
     cost === unit.cost &&
-    suggestedPrice === unit.suggestedPrice;
+    suggestedPrice === unit.suggestedPrice &&
+    newPhoto === undefined;
   if (unchanged) return refuse("invalid-input", "Nothing was changed");
 
   // The one live purchase expense, if there is exactly one to follow.
@@ -108,22 +138,28 @@ export function planEditUnit(
     idCount: 0,
     build(ids) {
       idPicker(ids, 0);
-      const result: UnitEditResult = {
-        unitPatch: {
-          key: unit.key,
-          fields: {
-            name,
-            category: input.category,
-            condition: input.condition,
-            imei,
-            date: input.date,
-            cost,
-            suggestedPrice,
-            editedBy: ctx.email,
-            editedAt: ctx.now,
-          },
-        },
+      const fields: Partial<Unit> = {
+        name,
+        category: input.category,
+        condition: input.condition,
+        imei,
+        date: input.date,
+        cost,
+        suggestedPrice,
+        editedBy: ctx.email,
+        editedAt: ctx.now,
       };
+      if (newPhoto !== undefined) {
+        fields.photoURL = newPhoto;
+        fields.photoUploadedAt = ctx.now;
+      }
+      const result: UnitEditResult = { unitPatch: { key: unit.key, fields }, nameDisplayPatches: [] };
+
+      if (name !== unit.name) {
+        for (const r of namedRowsOf(unit, records)) {
+          if (r.unitName !== name) result.nameDisplayPatches.push({ key: r.key, fields: { unitName: name } });
+        }
+      }
       if (expense) {
         const fields: Partial<Expense> = {};
         if (expense.amount !== cost) fields.amount = cost;

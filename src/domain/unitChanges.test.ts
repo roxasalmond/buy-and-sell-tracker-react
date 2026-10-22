@@ -90,16 +90,53 @@ describe("planEditUnit", () => {
     expect(planned.build([]).unitPatch.fields).toMatchObject({ category: "Laptop", imei: "" });
   });
 
-  it("refuses no change, bad input, a deleted unit, a sold unit and a unit on a plan", () => {
+  it("refuses no change, bad input and a deleted unit", () => {
     expect(planEditUnit(unit, records, editInput(), ctx).ok).toBe(false);
     expect(planEditUnit(unit, records, editInput({ cost: 0 }), ctx).ok).toBe(false);
     expect(planEditUnit(unit, records, editInput({ name: " " }), ctx).ok).toBe(false);
     const deleted = planEditUnit({ ...unit, deleted: true }, records, editInput({ name: "x" }), ctx);
     expect(!deleted.ok && deleted.reason).toBe("unit-deleted");
-    const sold = planEditUnit(findUnit("TXN-045"), records, editInput({ name: "x" }), ctx);
-    expect(!sold.ok && sold.reason).toBe("already-sold");
-    const onPlan = planEditUnit(findUnit("TXN-003"), records, editInput({ name: "x" }), ctx);
-    expect(!onPlan.ok && onPlan.reason).toBe("on-installment");
+  });
+
+  it("a new photo is saved with its upload time; the same photo counts as no change", () => {
+    const withPhoto = planEditUnit(unit, records, editInput({ photoURL: "https://example.com/new.jpg" }), ctx);
+    if (!withPhoto.ok) throw new Error(withPhoto.message);
+    expect(withPhoto.build([]).unitPatch.fields).toMatchObject({
+      photoURL: "https://example.com/new.jpg",
+      photoUploadedAt: ctx.now,
+    });
+    if (unit.photoURL) {
+      expect(planEditUnit(unit, records, editInput({ photoURL: unit.photoURL }), ctx).ok).toBe(false);
+    }
+  });
+
+  describe("sold units: descriptive fields only", () => {
+    const sold = findUnit("TXN-045");
+    const soldInput = (over: Partial<EditUnitInput> = {}): EditUnitInput => ({
+      name: sold.name,
+      category: sold.category,
+      condition: sold.condition,
+      imei: sold.imei,
+      date: sold.date,
+      cost: sold.cost,
+      suggestedPrice: sold.suggestedPrice ?? 1,
+      ...over,
+    });
+
+    it("refuses a new cost and points at undoing the sale", () => {
+      const planned = planEditUnit(sold, records, soldInput({ cost: sold.cost + 1 }), ctx);
+      expect(!planned.ok && planned.reason).toBe("already-sold");
+    });
+
+    it("a rename renames the unit on its plan and sale rows too, and writes no money fields", () => {
+      const planned = planEditUnit(sold, records, soldInput({ name: "Renamed iPad" }), ctx);
+      if (!planned.ok) throw new Error(planned.message);
+      const r = planned.build([]);
+      expect(r.unitPatch.fields).toMatchObject({ name: "Renamed iPad", cost: sold.cost });
+      expect(r.unitPatch.fields.soldFor).toBeUndefined();
+      expect(r.nameDisplayPatches.length).toBeGreaterThan(0);
+      for (const p of r.nameDisplayPatches) expect(p.fields).toEqual({ unitName: "Renamed iPad" });
+    });
   });
 });
 

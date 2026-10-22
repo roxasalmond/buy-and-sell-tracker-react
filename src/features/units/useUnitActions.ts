@@ -5,6 +5,7 @@ import type { PlanResult } from "../../domain/plan";
 import type { TransactionRecord, UnitRecord } from "../../domain/schemas";
 import { planDeleteUnit, planEditUnit, planRestoreUnit } from "../../domain/unitChanges";
 import type { EditUnitInput, UnitReversal } from "../../domain/unitChanges";
+import { photoProblem, uploadUnitPhoto } from "../../lib/cloudinary";
 import { toLocalDateString } from "../../lib/dates";
 import type { Notice } from "../notice";
 
@@ -37,13 +38,32 @@ export function useUnitActions(records: readonly TransactionRecord[], setNotice:
   }
 
   /** Used by the edit dialog; returns an error message, or null when saved (and closes it). */
-  async function saveEdit(unit: UnitRecord, input: EditUnitInput): Promise<string | null> {
+  async function saveEdit(unit: UnitRecord, input: EditUnitInput, newPhoto: File | null): Promise<string | null> {
     const ctx = context();
     if (!ctx) return "You are signed out. Please sign in again.";
     if (busy) return "Please wait, still saving.";
+
+    if (newPhoto) {
+      const problem = photoProblem(newPhoto);
+      if (problem) return problem;
+    }
+    // Check the form before uploading, so a typo does not leave a stray photo behind.
+    const check = planEditUnit(unit, records, { ...input, photoURL: newPhoto ? "pending" : undefined }, ctx);
+    if (!check.ok) return check.message;
+
     setBusy(true);
-    const result = await executePlan(planEditUnit(unit, records, input, ctx), (r) => ({
-      patches: [r.unitPatch, ...(r.expensePatch ? [r.expensePatch] : [])],
+    let photoURL: string | undefined;
+    if (newPhoto) {
+      try {
+        photoURL = await uploadUnitPhoto(newPhoto);
+      } catch (error) {
+        console.error("Photo upload failed:", error);
+        setBusy(false);
+        return "The photo could not be uploaded. Nothing was saved. Please try again.";
+      }
+    }
+    const result = await executePlan(planEditUnit(unit, records, { ...input, photoURL }, ctx), (r) => ({
+      patches: [r.unitPatch, ...(r.expensePatch ? [r.expensePatch] : []), ...r.nameDisplayPatches],
     }));
     setBusy(false);
     if (!result.ok) return result.message;

@@ -200,7 +200,16 @@ export function InstallmentsTable({ rows, actions }: { rows: InstallmentRecord[]
   );
 }
 
-export function SoldTable({ rows, undo }: { rows: UnitRecord[]; undo?: SaleUndoActions | undefined }) {
+export function SoldTable({
+  rows,
+  undo,
+  edit,
+}: {
+  rows: UnitRecord[];
+  undo?: SaleUndoActions | undefined;
+  /** Edit for descriptive fields and the photo (cost and sold price stay locked). */
+  edit?: UnitActions | undefined;
+}) {
   return (
     <Table
       headers={[
@@ -238,6 +247,11 @@ export function SoldTable({ rows, undo }: { rows: UnitRecord[]; undo?: SaleUndoA
             </Td>
             {undo && (
               <Td label="Action">
+                {!u.deleted && edit && (
+                  <button type="button" className="edit-btn" disabled={edit.busy} onClick={() => edit.onEdit(u)}>
+                    Edit
+                  </button>
+                )}
                 {u.installmentId !== undefined ? (
                   <span className="muted">Sold via installment</span>
                 ) : u.deleted ? null : (

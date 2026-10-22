@@ -5,7 +5,7 @@
       ".write": "auth != null && (auth.token.email == 'partner-a@example.com' || auth.token.email == 'partner-b@example.com')"
     },
     "metadata": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email == 'partner-a@example.com' || auth.token.email == 'partner-b@example.com')",
       ".write": "auth != null && (auth.token.email == 'partner-a@example.com' || auth.token.email == 'partner-b@example.com')"
     }
   }
