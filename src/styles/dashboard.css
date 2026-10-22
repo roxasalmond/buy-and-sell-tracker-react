@@ -855,6 +855,11 @@ table {
   }
 
   .history-tabs,
+  .filters,
+  .pager,
+  .transaction-history h2 {
+    flex-shrink: 0;
+  }
 
   .table-wrapper {
     flex: 1;
@@ -1142,4 +1147,60 @@ table {
     min-width: 44px;
     height: 44px;
   }
+}
+
+/* Entry forms in the sidebar (fund, remit) */
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.entry-form input {
+  width: 100%;
+  padding: 12px 15px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.entry-form input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.entry-submit {
+  padding: 12px 15px;
+  background-color: var(--accent-primary);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+}
+
+.entry-submit:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.entry-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.entry-message {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.entry-message.ok {
+  color: #078a28;
+}
+
+.entry-message.error {
+  color: var(--danger-color);
 }

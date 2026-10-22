@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "emulators": "firebase emulators:start --only auth,database --project demo-buy-sell",
+    "seed": "node scripts/seed-emulator.mjs",
+    "dev:emulator": "vite --mode emulator"
   },
   "dependencies": {
     "firebase": "^13.1.0",
@@ -26,6 +29,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.30.0",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "firebase-tools": "^15.34.1",
     "globals": "^16.0.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.0",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { CashEntryForm } from "../features/entries/CashEntryForm";
 import { formatPeso } from "../lib/money";
 import type { Summary } from "../domain/summary";
 
@@ -68,7 +69,11 @@ export function Sidebar({ summary }: { summary: Summary }) {
             </button>
           ))}
         </div>
-        <p className="coming-soon">Entry forms arrive in phase 4. This version only reads data.</p>
+        {form === "fund" && <CashEntryForm kind="fund" />}
+        {form === "remit" && <CashEntryForm kind="remit" />}
+        {(form === "unit" || form === "installment") && (
+          <p className="coming-soon">This form arrives in a later step of phase 4.</p>
+        )}
       </div>
     </aside>
   );

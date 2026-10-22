@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getDatabase } from "firebase/database";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectDatabaseEmulator, getDatabase } from "firebase/database";
 
 function requireEnv(name: keyof ImportMetaEnv): string {
   const value = import.meta.env[name];
@@ -24,3 +24,9 @@ const app = initializeApp({
 
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+
+// Local emulators (VITE_USE_EMULATOR=true): auth on 9099, database on 9000. Nothing touches the real project.
+if (import.meta.env.VITE_USE_EMULATOR === "true") {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectDatabaseEmulator(db, "127.0.0.1", 9000);
+}
