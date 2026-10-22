@@ -2,7 +2,7 @@
  * Turns the result of a plan into ONE multi-path update, so everything is saved together
  * or not at all. Pure: no Firebase here, so it is unit tested.
  *
- *   new rows      transactions/<newKey>            = the whole row
+ *   new rows      transactions/<newKey>            = the whole row (key made here, or given)
  *   changed rows  transactions/<key>/<field>       = the new value (null clears a field)
  *
  * Only explicit fields are written; a parsed record is never saved back whole (parsing
@@ -16,7 +16,10 @@ export interface RowPatch {
 }
 
 export interface WriteSet {
+  /** New rows that get a fresh push key each. */
   create?: readonly Transaction[];
+  /** New rows whose key was made beforehand, because another new row points at it. */
+  createAt?: readonly { key: string; row: Transaction }[];
   patches?: readonly RowPatch[];
 }
 
@@ -30,6 +33,10 @@ export function buildUpdates(set: WriteSet, newKey: () => string): Record<string
 
   for (const row of set.create ?? []) {
     updates[`transactions/${newKey()}`] = withoutUndefined(row);
+  }
+
+  for (const { key, row } of set.createAt ?? []) {
+    updates[`transactions/${key}`] = withoutUndefined(row);
   }
 
   for (const patch of set.patches ?? []) {

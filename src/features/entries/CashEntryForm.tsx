@@ -6,6 +6,7 @@ import { planAddFund, planAddRemit } from "../../domain/cashEntry";
 import type { PlanResult } from "../../domain/plan";
 import type { Transaction } from "../../domain/schemas";
 import { toLocalDateString } from "../../lib/dates";
+import { useFlashMessage } from "../useFlashMessage";
 
 type Kind = "fund" | "remit";
 
@@ -19,7 +20,7 @@ export function CashEntryForm({ kind }: { kind: Kind }) {
   const [date, setDate] = useState(toLocalDateString());
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [message, setMessage] = useFlashMessage();
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

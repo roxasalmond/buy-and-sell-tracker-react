@@ -5,6 +5,8 @@ import type { Fund, FundReturn, InstallmentRecord, Remit, UnitRecord } from "../
 import type { CashRowActions } from "../features/entries/useCashRowActions";
 import type { InstallmentActions } from "../features/installments/useInstallmentActions";
 import type { SellActions } from "../features/sales/useSellUnit";
+import type { SaleUndoActions } from "../features/sales/useSaleUndo";
+import type { UnitActions } from "../features/units/useUnitActions";
 import { SellBox } from "./SellBox";
 
 type Keyed<T> = T & { key: string };
@@ -49,15 +51,29 @@ export function UnitsTable({
   rows,
   onPhoto,
   sell,
+  actions,
 }: {
   rows: UnitRecord[];
   onPhoto: (url: string, name: string) => void;
   /** Undefined while saving is switched off: the column then shows the suggested price. */
   sell?: SellActions | undefined;
+  /** Undefined while saving is switched off: no Action column then. */
+  actions?: UnitActions | undefined;
 }) {
   return (
     <Table
-      headers={["Transaction ID", "Unit Name", "IMEI", "Condition", "Date", "Cost", sell ? "Sold For" : "Suggested Price", "Status", "Photo"]}
+      headers={[
+        "Transaction ID",
+        "Unit Name",
+        "IMEI",
+        "Condition",
+        "Date",
+        "Cost",
+        sell ? "Sold For" : "Suggested Price",
+        "Status",
+        "Photo",
+        ...(actions ? ["Action"] : []),
+      ]}
     >
       {rows.map((u) => (
         <tr key={u.key} className={rowClass(u.deleted)}>
@@ -92,6 +108,24 @@ export function UnitsTable({
               "-"
             )}
           </Td>
+          {actions && (
+            <Td label="Action">
+              {u.deleted ? (
+                <button type="button" className="restore-btn" disabled={actions.busy} onClick={() => actions.onRestore(u)}>
+                  Restore
+                </button>
+              ) : (
+                <>
+                  <button type="button" className="edit-btn" disabled={actions.busy} onClick={() => actions.onEdit(u)}>
+                    Edit
+                  </button>
+                  <button type="button" className="delete-btn" disabled={actions.busy} onClick={() => actions.onDelete(u)}>
+                    Delete
+                  </button>
+                </>
+              )}
+            </Td>
+          )}
         </tr>
       ))}
     </Table>
@@ -166,7 +200,7 @@ export function InstallmentsTable({ rows, actions }: { rows: InstallmentRecord[]
   );
 }
 
-export function SoldTable({ rows }: { rows: UnitRecord[] }) {
+export function SoldTable({ rows, undo }: { rows: UnitRecord[]; undo?: SaleUndoActions | undefined }) {
   return (
     <Table
       headers={[
@@ -179,6 +213,7 @@ export function SoldTable({ rows }: { rows: UnitRecord[] }) {
         "Cost",
         "Sold For",
         "Profit",
+        ...(undo ? ["Action"] : []),
       ]}
     >
       {rows.map((u) => {
@@ -201,6 +236,17 @@ export function SoldTable({ rows }: { rows: UnitRecord[] }) {
             <Td label="Profit" className={profit >= 0 ? "income" : "expense"}>
               {formatPeso(profit)}
             </Td>
+            {undo && (
+              <Td label="Action">
+                {u.installmentId !== undefined ? (
+                  <span className="muted">Sold via installment</span>
+                ) : u.deleted ? null : (
+                  <button type="button" className="delete-btn" disabled={undo.busy} onClick={() => undo.onUndo(u)}>
+                    Undo sale
+                  </button>
+                )}
+              </Td>
+            )}
           </tr>
         );
       })}
@@ -226,7 +272,15 @@ function CashButtons({ row, actions }: { row: CashRow; actions: CashRowActions }
 }
 
 /** `actions` is undefined while saving is switched off: no Action column then. */
-export function FundsTable({ rows, actions }: { rows: Keyed<Fund | FundReturn>[]; actions?: CashRowActions | undefined }) {
+export function FundsTable({
+  rows,
+  actions,
+  saleUndo,
+}: {
+  rows: Keyed<Fund | FundReturn>[];
+  actions?: CashRowActions | undefined;
+  saleUndo?: SaleUndoActions | undefined;
+}) {
   return (
     <Table headers={["Transaction ID", "Date", "Amount", "Description", ...(actions ? ["Action"] : [])]}>
       {rows.map((f) => (
@@ -237,7 +291,15 @@ export function FundsTable({ rows, actions }: { rows: Keyed<Fund | FundReturn>[]
           <Td label="Description">{f.type === "fund-return" ? `Return from: ${f.unitName}` : "Fund Added"}</Td>
           {actions && (
             <Td label="Action">
-              {f.type === "fund" ? <CashButtons row={f} actions={actions} /> : <span className="muted">Part of a sale</span>}
+              {f.type === "fund" ? (
+                <CashButtons row={f} actions={actions} />
+              ) : f.deleted && f.installmentId === undefined && saleUndo ? (
+                <button type="button" className="restore-btn" disabled={saleUndo.busy} onClick={() => saleUndo.onRedo(f)}>
+                  Redo sale
+                </button>
+              ) : (
+                <span className="muted">Part of a sale</span>
+              )}
             </Td>
           )}
         </tr>

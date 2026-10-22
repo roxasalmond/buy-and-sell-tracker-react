@@ -11,6 +11,13 @@ import type { WriteSet } from "./multiPath";
  */
 export const writesEnabled = import.meta.env.VITE_ENABLE_WRITES === "true";
 
+/** A fresh push key for a new row, made before saving (used when another row must point at it). */
+export function newTransactionKey(): string {
+  const key = push(ref(db, "transactions")).key;
+  if (!key) throw new Error("Could not create a record key");
+  return key;
+}
+
 export type ExecuteResult<R> = { ok: true; result: R } | { ok: false; message: string };
 
 /**
@@ -30,12 +37,7 @@ export async function executePlan<R>(
     // Edits, deletes and restores create no rows, so they need no ids.
     const ids = plan.idCount > 0 ? await reserveIds(plan.idCount) : [];
     const result = plan.build(ids);
-    const root = ref(db, "transactions");
-    const updates = buildUpdates(toWrites(result), () => {
-      const key = push(root).key;
-      if (!key) throw new Error("Could not create a record key");
-      return key;
-    });
+    const updates = buildUpdates(toWrites(result), newTransactionKey);
     await update(ref(db), updates);
     return { ok: true, result };
   } catch (error) {

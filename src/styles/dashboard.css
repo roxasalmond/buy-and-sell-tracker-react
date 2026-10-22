@@ -1248,6 +1248,7 @@ table {
   font-weight: 600;
 }
 
+.modal-card select,
 .modal-card input {
   padding: 10px 12px;
   background-color: var(--bg-primary);
@@ -1399,4 +1400,39 @@ tr.deleted-row td[data-label="Action"] {
 .history-totals dd {
   text-align: right;
   font-weight: 600;
+}
+
+/* Add Unit: photo picker and preview */
+.photo-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.photo-pick input[type="file"] {
+  max-width: 100%;
+}
+
+.photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.photo-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.remove-photo-btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: #e53935;
+  color: #fff;
 }

@@ -19,6 +19,9 @@ import type { Notice } from "../features/notice";
 import { PaymentHistoryModal } from "../features/installments/PaymentHistoryModal";
 import { PaymentModal } from "../features/installments/PaymentModal";
 import { useInstallmentActions } from "../features/installments/useInstallmentActions";
+import { EditUnitModal } from "../features/units/EditUnitModal";
+import { useUnitActions } from "../features/units/useUnitActions";
+import { useSaleUndo } from "../features/sales/useSaleUndo";
 import { useSellUnit } from "../features/sales/useSellUnit";
 import { Filters } from "./Filters";
 import { FundsTable, InstallmentsTable, RemitsTable, SoldTable, UnitsTable } from "./HistoryTables";
@@ -57,6 +60,10 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
   const cashActions = writesEnabled ? cash.actions : undefined;
   const sell = useSellUnit(setNotice);
   const sellActions = writesEnabled ? sell : undefined;
+  const saleUndo = useSaleUndo(records, setNotice);
+  const saleUndoActions = writesEnabled ? saleUndo : undefined;
+  const unitChanges = useUnitActions(records, setNotice);
+  const unitActions = writesEnabled ? unitChanges.actions : undefined;
   const installments = useInstallmentActions(records, setNotice);
   const installmentActions = writesEnabled
     ? installments.actions
@@ -141,11 +148,11 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
           />
         )}
 
-        {tab === "units" && <UnitsTable rows={rowsOf(units)} onPhoto={(url, name) => setPhoto({ url, name })} sell={sellActions} />}
+        {tab === "units" && <UnitsTable rows={rowsOf(units)} onPhoto={(url, name) => setPhoto({ url, name })} sell={sellActions} actions={unitActions} />}
         {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} actions={installmentActions} />}
-        {tab === "funds" && <FundsTable rows={rowsOf(funds)} actions={cashActions} />}
+        {tab === "funds" && <FundsTable rows={rowsOf(funds)} actions={cashActions} saleUndo={saleUndoActions} />}
         {tab === "remits" && <RemitsTable rows={rowsOf(remits)} actions={cashActions} />}
-        {tab === "sold" && <SoldTable rows={rowsOf(sold)} />}
+        {tab === "sold" && <SoldTable rows={rowsOf(sold)} undo={saleUndoActions} />}
         <Pagination
           page={page}
           pageSize={pageSize}
@@ -156,6 +163,9 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
           }}
         />
       </section>
+      {unitChanges.editing && (
+        <EditUnitModal unit={unitChanges.editing} onSave={unitChanges.saveEdit} onClose={unitChanges.closeEdit} />
+      )}
       {cash.editing && <EditCashModal row={cash.editing} onSave={cash.saveEdit} onClose={cash.closeEdit} />}
       {installments.paying && (
         <PaymentModal plan={installments.paying} onSave={installments.savePayment} onClose={installments.closePayment} />

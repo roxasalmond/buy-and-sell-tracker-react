@@ -8,6 +8,7 @@ import { isAvailable } from "../../domain/unitStatus";
 import { unitsInStock } from "../../domain/views";
 import { toLocalDateString } from "../../lib/dates";
 import { formatPeso } from "../../lib/money";
+import { useFlashMessage } from "../useFlashMessage";
 
 type Frequency = "" | "weekly" | "monthly";
 
@@ -23,7 +24,7 @@ export function InstallmentForm({ records }: { records: readonly TransactionReco
   const [paymentAmount, setPaymentAmount] = useState("");
   const [nextDueDate, setNextDueDate] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [message, setMessage] = useFlashMessage();
 
   function reset() {
     setUnitKey("");

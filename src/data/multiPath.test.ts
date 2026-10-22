@@ -16,6 +16,11 @@ describe("buildUpdates", () => {
     expect(updates["transactions/k1"]).toEqual(fund);
   });
 
+  it("writes rows that come with their own key at that key", () => {
+    const updates = buildUpdates({ createAt: [{ key: "unitKey", row: fund }], create: [fund] }, () => "k1");
+    expect(Object.keys(updates)).toEqual(["transactions/k1", "transactions/unitKey"]);
+  });
+
   it("writes patches field by field, keeps null, drops undefined", () => {
     const updates = buildUpdates(
       { patches: [{ key: "u1", fields: { status: "sold", soldFor: null, soldDate: undefined } }] },

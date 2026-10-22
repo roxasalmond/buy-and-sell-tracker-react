@@ -6,6 +6,7 @@ import { formatPeso } from "../lib/money";
 import type { TransactionRecord } from "../domain/schemas";
 import type { Summary } from "../domain/summary";
 import { InstallmentForm } from "../features/installments/InstallmentForm";
+import { AddUnitForm } from "../features/units/AddUnitForm";
 
 const FORMS = [
   { id: "unit", label: "Add Unit" },
@@ -74,7 +75,7 @@ export function Sidebar({ summary, records }: { summary: Summary; records: reado
         {form === "fund" && <CashEntryForm kind="fund" />}
         {form === "remit" && <CashEntryForm kind="remit" />}
         {form === "installment" && <InstallmentForm records={records} />}
-        {form === "unit" && <p className="coming-soon">This form arrives in a later step of phase 4.</p>}
+        {form === "unit" && <AddUnitForm />}
       </div>
     </aside>
   );
