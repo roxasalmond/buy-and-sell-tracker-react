@@ -6,6 +6,8 @@ export interface Summary {
   fund: number;
   /** Cost of the units still in stock. */
   inventory: number;
+  /** Cost of the units currently on an installment plan (not part of inventory). */
+  installmentValue: number;
   /** Sum of profit on every sale. */
   income: number;
   /** Sum of each partner's divided half of the profit. */
@@ -24,6 +26,7 @@ export function computeSummary(records: readonly Transaction[]): Summary {
   let remits = 0;
   let expenses = 0;
   let inventory = 0;
+  let installmentValue = 0;
   let income = 0;
   let divided = 0;
 
@@ -44,6 +47,7 @@ export function computeSummary(records: readonly Transaction[]): Summary {
         break;
       case "unit":
         if (r.status === "in-stock") inventory += r.cost;
+        else if (r.status === "installment") installmentValue += r.cost;
         break;
       case "income":
         income += r.profit;
@@ -57,6 +61,7 @@ export function computeSummary(records: readonly Transaction[]): Summary {
   return {
     fund: round2(funds + fundReturns - remits - expenses),
     inventory: round2(inventory),
+    installmentValue: round2(installmentValue),
     income: round2(income),
     divided: round2(divided),
   };

@@ -38,6 +38,10 @@ export function Sidebar({ summary, records }: { summary: Summary; records: reado
           <div className="total-value">{formatPeso(summary.inventory)}</div>
         </div>
         <div className="label">
+          <span>Installment Units Value</span>
+          <div className="total-value">{formatPeso(summary.installmentValue)}</div>
+        </div>
+        <div className="label">
           <span>Available Fund</span>
           <div className="total-fund">{formatPeso(summary.fund)}</div>
         </div>

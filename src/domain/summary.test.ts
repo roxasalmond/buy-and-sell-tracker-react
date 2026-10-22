@@ -38,6 +38,7 @@ describe("scrubbed 22 Oct 2026 export", () => {
     expect(computeSummary(parsed.records)).toEqual({
       fund: 19310,
       inventory: 29000,
+      installmentValue: 178700,
       income: 171500,
       divided: 85750,
     });
@@ -48,7 +49,7 @@ describe("computeSummary", () => {
   const base = { transactionId: "TXN-001" };
 
   it("is all zeros for no records", () => {
-    expect(computeSummary([])).toEqual({ fund: 0, inventory: 0, income: 0, divided: 0 });
+    expect(computeSummary([])).toEqual({ fund: 0, inventory: 0, installmentValue: 0, income: 0, divided: 0 });
   });
 
   it("skips soft-deleted records", () => {
@@ -85,5 +86,28 @@ describe("computeSummary", () => {
       { ...unit, status: "sold", soldFor: 5000 },
     ];
     expect(computeSummary(records).inventory).toBe(4000);
+  });
+
+  it("counts the cost of units on an installment plan separately, skipping deleted ones", () => {
+    const unit = {
+      ...base,
+      type: "unit" as const,
+      name: "Phone",
+      category: "Android",
+      condition: "Brandnew",
+      imei: "0",
+      cost: 4000,
+      date: "2026-01-01",
+    };
+    const records: Transaction[] = [
+      { ...unit, status: "in-stock" },
+      { ...unit, status: "installment" },
+      { ...unit, status: "installment", cost: 1500 },
+      { ...unit, status: "installment", deleted: true },
+      { ...unit, status: "sold", soldFor: 5000 },
+    ];
+    const summary = computeSummary(records);
+    expect(summary.installmentValue).toBe(5500);
+    expect(summary.inventory).toBe(4000);
   });
 });
