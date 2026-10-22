@@ -12,7 +12,7 @@ export function DashboardPage() {
 
   return (
     <div className="main-container">
-      <Sidebar summary={computeSummary(state.records)} />
+      <Sidebar summary={computeSummary(state.records)} records={state.records} />
       <HistoryTabs records={state.records} />
       <ActivityFeed records={state.records} />
       {state.skipped > 0 && <p className="status-text">{state.skipped} record(s) skipped (see console).</p>}

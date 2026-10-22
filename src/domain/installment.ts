@@ -301,3 +301,121 @@ export function planRecordPayment(
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Delete and restore a plan ("reverse everything")
+// ---------------------------------------------------------------------------
+
+type LedgerRecord = (Income | FundReturn) & { key: string };
+
+export interface PlanReversal {
+  planPatch: Patch<Installment>;
+  /** Every income / fund-return row of the plan that this change touches. */
+  ledgerPatches: Patch<Income | FundReturn>[];
+  /** Absent when the unit no longer exists or is not linked to this plan. */
+  unitPatch?: Patch<Record<string, unknown>>;
+}
+
+/** The income and fund-return rows written for this plan (they carry its TXN number). */
+function ledgerOf(plan: InstallmentRecord, records: readonly { type: string }[]): LedgerRecord[] {
+  return (records as readonly (LedgerRecord | { type: string })[]).filter(
+    (r): r is LedgerRecord =>
+      (r.type === "income" || r.type === "fund-return") &&
+      (r as LedgerRecord).installmentId === plan.transactionId,
+  );
+}
+
+const SOLD_FIELDS = ["soldFor", "soldDate", "soldBy", "soldAt", "completedAt"] as const;
+
+/**
+ * Deleting a plan reverses all of it: the plan and every payment row it produced are
+ * soft-deleted (the summary skips deleted rows, so the fund and income go back to what
+ * they were before the plan), and the unit returns to stock. Rows that were already
+ * deleted on their own are left as they are.
+ */
+export function planDeleteInstallment(
+  plan: InstallmentRecord,
+  records: readonly { type: string }[],
+  unit: UnitRecord | undefined,
+  ctx: WriteContext,
+): PlanResult<PlanReversal> {
+  if (plan.deleted) return refuse("plan-deleted", "This installment is already deleted.");
+
+  const rows = ledgerOf(plan, records).filter((r) => !r.deleted);
+  const linked = unit !== undefined && (unit.installmentId === plan.transactionId || unit.installmentId === undefined);
+
+  return {
+    ok: true,
+    idCount: 0,
+    build(ids) {
+      idPicker(ids, 0);
+      const result: PlanReversal = {
+        planPatch: { key: plan.key, fields: { deleted: true, deletedBy: ctx.email, deletedAt: ctx.now } },
+        ledgerPatches: rows.map((r) => ({
+          key: r.key,
+          fields: { deleted: true, deletedBy: ctx.email, deletedAt: ctx.now },
+        })),
+      };
+      if (unit && linked) {
+        const fields: Record<string, unknown> = { status: "in-stock", installmentId: null };
+        // A finished plan had sold the unit; take the sale back too.
+        for (const f of SOLD_FIELDS) fields[f] = null;
+        result.unitPatch = { key: unit.key, fields };
+      }
+      return result;
+    },
+  };
+}
+
+/**
+ * Restore undoes a delete: the plan and the rows that were deleted with it come back and
+ * the unit returns to the plan. The unit must still be in stock, otherwise it has been
+ * sold or put on another plan in the meantime and restoring would count it twice.
+ */
+export function planRestoreInstallment(
+  plan: InstallmentRecord,
+  records: readonly { type: string }[],
+  unit: UnitRecord | undefined,
+  ctx: WriteContext,
+): PlanResult<PlanReversal> {
+  if (!plan.deleted) return refuse("entry-not-deleted", "This installment is not deleted.");
+  if (!unit) return refuse("unit-missing", "The unit for this plan no longer exists, so it cannot be restored.");
+  if (unit.deleted) return refuse("unit-deleted", "The unit for this plan is deleted. Restore the unit first.");
+  if (effectiveStatus(unit) !== "in-stock") {
+    return refuse(
+      "unit-not-in-stock",
+      "This unit is no longer in stock (it was sold or put on another installment), so the plan cannot be restored.",
+    );
+  }
+
+  // Only rows deleted together with the plan; a payment row deleted earlier stays deleted.
+  const rows = ledgerOf(plan, records).filter((r) => r.deleted && r.deletedAt === plan.deletedAt);
+  const completed = plan.status === "completed";
+
+  return {
+    ok: true,
+    idCount: 0,
+    build(ids) {
+      idPicker(ids, 0);
+      const fields: Record<string, unknown> = completed
+        ? {
+            status: "sold",
+            installmentId: plan.transactionId,
+            soldFor: plan.totalPrice,
+            soldDate: plan.lastPaymentDate ?? ctx.today,
+            soldBy: ctx.email,
+            soldAt: ctx.now,
+            completedAt: ctx.now,
+          }
+        : { status: "installment", installmentId: plan.transactionId };
+      return {
+        planPatch: { key: plan.key, fields: { deleted: false, restoredBy: ctx.email, restoredAt: ctx.now } },
+        ledgerPatches: rows.map((r) => ({
+          key: r.key,
+          fields: { deleted: false, restoredBy: ctx.email, restoredAt: ctx.now },
+        })),
+        unitPatch: { key: unit.key, fields },
+      };
+    },
+  };
+}

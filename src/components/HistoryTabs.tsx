@@ -16,6 +16,9 @@ import { writesEnabled } from "../data/writes";
 import { EditCashModal } from "../features/entries/EditCashModal";
 import { useCashRowActions } from "../features/entries/useCashRowActions";
 import type { Notice } from "../features/notice";
+import { PaymentHistoryModal } from "../features/installments/PaymentHistoryModal";
+import { PaymentModal } from "../features/installments/PaymentModal";
+import { useInstallmentActions } from "../features/installments/useInstallmentActions";
 import { useSellUnit } from "../features/sales/useSellUnit";
 import { Filters } from "./Filters";
 import { FundsTable, InstallmentsTable, RemitsTable, SoldTable, UnitsTable } from "./HistoryTables";
@@ -54,6 +57,10 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
   const cashActions = writesEnabled ? cash.actions : undefined;
   const sell = useSellUnit(setNotice);
   const sellActions = writesEnabled ? sell : undefined;
+  const installments = useInstallmentActions(records, setNotice);
+  const installmentActions = writesEnabled
+    ? installments.actions
+    : { busy: false, onHistory: installments.actions.onHistory };
   const [photo, setPhoto] = useState<{ url: string; name: string } | null>(null);
 
   const [unitRange, setUnitRange] = useState<DateRange>(NO_DATE_RANGE);
@@ -135,7 +142,7 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
         )}
 
         {tab === "units" && <UnitsTable rows={rowsOf(units)} onPhoto={(url, name) => setPhoto({ url, name })} sell={sellActions} />}
-        {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} />}
+        {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} actions={installmentActions} />}
         {tab === "funds" && <FundsTable rows={rowsOf(funds)} actions={cashActions} />}
         {tab === "remits" && <RemitsTable rows={rowsOf(remits)} actions={cashActions} />}
         {tab === "sold" && <SoldTable rows={rowsOf(sold)} />}
@@ -150,6 +157,10 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
         />
       </section>
       {cash.editing && <EditCashModal row={cash.editing} onSave={cash.saveEdit} onClose={cash.closeEdit} />}
+      {installments.paying && (
+        <PaymentModal plan={installments.paying} onSave={installments.savePayment} onClose={installments.closePayment} />
+      )}
+      {installments.history && <PaymentHistoryModal plan={installments.history} onClose={installments.closeHistory} />}
       {photo && <PhotoModal url={photo.url} name={photo.name} onClose={() => setPhoto(null)} />}
     </main>
   );

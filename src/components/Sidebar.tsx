@@ -3,7 +3,9 @@ import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { CashEntryForm } from "../features/entries/CashEntryForm";
 import { formatPeso } from "../lib/money";
+import type { TransactionRecord } from "../domain/schemas";
 import type { Summary } from "../domain/summary";
+import { InstallmentForm } from "../features/installments/InstallmentForm";
 
 const FORMS = [
   { id: "unit", label: "Add Unit" },
@@ -12,7 +14,7 @@ const FORMS = [
   { id: "remit", label: "Remit" },
 ] as const;
 
-export function Sidebar({ summary }: { summary: Summary }) {
+export function Sidebar({ summary, records }: { summary: Summary; records: readonly TransactionRecord[] }) {
   const [form, setForm] = useState<(typeof FORMS)[number]["id"]>("unit");
 
   return (
@@ -71,9 +73,8 @@ export function Sidebar({ summary }: { summary: Summary }) {
         </div>
         {form === "fund" && <CashEntryForm kind="fund" />}
         {form === "remit" && <CashEntryForm kind="remit" />}
-        {(form === "unit" || form === "installment") && (
-          <p className="coming-soon">This form arrives in a later step of phase 4.</p>
-        )}
+        {form === "installment" && <InstallmentForm records={records} />}
+        {form === "unit" && <p className="coming-soon">This form arrives in a later step of phase 4.</p>}
       </div>
     </aside>
   );

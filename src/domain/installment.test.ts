@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { ledgerRowCount, planCreateInstallment, planRecordPayment, splitPayment } from "./installment";
+import {
+  ledgerRowCount,
+  planCreateInstallment,
+  planDeleteInstallment,
+  planRecordPayment,
+  planRestoreInstallment,
+  splitPayment,
+} from "./installment";
+import type { PlanReversal } from "./installment";
+import { computeSummary } from "./summary";
 import { ctx, fakeIds, findPlan, findUnit, findUnitByKey, records } from "./testFixture";
-import type { InstallmentRecord } from "./schemas";
+import type { InstallmentRecord, TransactionRecord, UnitRecord } from "./schemas";
 
 describe("splitPayment: cost first, then profit", () => {
   it("a payment below the unrecovered cost is all capital", () => {
@@ -276,5 +285,91 @@ describe("planRecordPayment", () => {
     const planned = planRecordPayment(plan, { ...unit, status: "sold" }, 5000, ctx);
     if (!planned.ok) throw new Error("expected a plan");
     expect(planned.build(fakeIds(planned.idCount)).unitPatch).toBeUndefined();
+  });
+});
+
+describe("delete and restore an installment plan", () => {
+  const unit = findUnit("TXN-162");
+  const input = {
+    buyerName: "Test Buyer",
+    totalPrice: 10000,
+    downPayment: 9000,
+    paymentFrequency: "weekly" as const,
+    paymentAmount: 500,
+    nextDueDate: "2026-11-01",
+  };
+
+  /** Apply a plan's rows and patches to a copy of the records, like Firebase would. */
+  function withPlan() {
+    const planned = planCreateInstallment(unit, input, ctx);
+    if (!planned.ok) throw new Error("expected a plan");
+    const result = planned.build(fakeIds(planned.idCount));
+    const created = result.create.map((r, i) => ({ ...r, key: `new-${i}` }) as TransactionRecord);
+    const patched = records.map((r) =>
+      r.key === unit.key ? ({ ...r, ...result.unitPatch.fields } as TransactionRecord) : r,
+    );
+    return { all: [...patched, ...created], plan: created[0] as InstallmentRecord };
+  }
+
+  function apply(all: TransactionRecord[], rev: PlanReversal): TransactionRecord[] {
+    const patches = [rev.planPatch, ...rev.ledgerPatches, ...(rev.unitPatch ? [rev.unitPatch] : [])];
+    return all.map((r) => {
+      const p = patches.find((x) => x.key === r.key);
+      if (!p) return r;
+      const next: Record<string, unknown> = { ...r };
+      for (const [k, v] of Object.entries(p.fields)) {
+        if (v === null) delete next[k];
+        else next[k] = v;
+      }
+      return next as TransactionRecord;
+    });
+  }
+
+  it("delete takes the summary back to what it was before the plan", () => {
+    const before = computeSummary(records);
+    const { all, plan } = withPlan();
+    const during = computeSummary(all);
+    expect(during.income).not.toBe(before.income);
+
+    const planned = planDeleteInstallment(plan, all, all.find((r) => r.key === unit.key) as UnitRecord, ctx);
+    if (!planned.ok) throw new Error("expected a plan");
+    expect(planned.idCount).toBe(0);
+    const rev = planned.build([]);
+    expect(rev.ledgerPatches).toHaveLength(3);
+    expect(rev.unitPatch?.fields).toMatchObject({ status: "in-stock", installmentId: null, soldFor: null });
+
+    const after = computeSummary(apply(all, rev));
+    expect(after).toEqual(before);
+  });
+
+  it("restore brings the plan back and returns the unit to the plan", () => {
+    const { all, plan } = withPlan();
+    const del = planDeleteInstallment(plan, all, all.find((r) => r.key === unit.key) as UnitRecord, ctx);
+    if (!del.ok) throw new Error("expected a plan");
+    const deleted = apply(all, del.build([]));
+
+    const deletedPlan = deleted.find((r) => r.key === plan.key) as InstallmentRecord;
+    const deletedUnit = deleted.find((r) => r.key === unit.key) as UnitRecord;
+    const res = planRestoreInstallment(deletedPlan, deleted, deletedUnit, ctx);
+    if (!res.ok) throw new Error("expected a plan");
+    const restored = apply(deleted, res.build([]));
+    expect(computeSummary(restored)).toEqual(computeSummary(all));
+    expect(restored.find((r) => r.key === unit.key)).toMatchObject({ status: "installment" });
+  });
+
+  it("refuses to delete twice, restore a live plan, or restore onto a unit that is no longer in stock", () => {
+    const { all, plan } = withPlan();
+    const u = all.find((r) => r.key === unit.key) as UnitRecord;
+    const del = planDeleteInstallment(plan, all, u, ctx);
+    if (!del.ok) throw new Error("expected a plan");
+    const deleted = apply(all, del.build([]));
+    const deletedPlan = deleted.find((r) => r.key === plan.key) as InstallmentRecord;
+
+    const again = planDeleteInstallment(deletedPlan, deleted, u, ctx);
+    expect(!again.ok && again.reason).toBe("plan-deleted");
+    const live = planRestoreInstallment(plan, all, u, ctx);
+    expect(!live.ok && live.reason).toBe("entry-not-deleted");
+    const sold = planRestoreInstallment(deletedPlan, deleted, { ...u, status: "sold" }, ctx);
+    expect(!sold.ok && sold.reason).toBe("unit-not-in-stock");
   });
 });

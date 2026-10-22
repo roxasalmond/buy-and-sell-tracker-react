@@ -3,6 +3,7 @@ import { formatPeso } from "../lib/money";
 import type { CashRow } from "../domain/cashRowChanges";
 import type { Fund, FundReturn, InstallmentRecord, Remit, UnitRecord } from "../domain/schemas";
 import type { CashRowActions } from "../features/entries/useCashRowActions";
+import type { InstallmentActions } from "../features/installments/useInstallmentActions";
 import type { SellActions } from "../features/sales/useSellUnit";
 import { SellBox } from "./SellBox";
 
@@ -97,7 +98,7 @@ export function UnitsTable({
   );
 }
 
-export function InstallmentsTable({ rows }: { rows: InstallmentRecord[] }) {
+export function InstallmentsTable({ rows, actions }: { rows: InstallmentRecord[]; actions: InstallmentActions }) {
   return (
     <Table
       headers={[
@@ -111,6 +112,7 @@ export function InstallmentsTable({ rows }: { rows: InstallmentRecord[] }) {
         "Balance",
         "Next Due Date",
         "Status",
+        "Action",
       ]}
     >
       {rows.map((p) => (
@@ -136,6 +138,27 @@ export function InstallmentsTable({ rows }: { rows: InstallmentRecord[] }) {
             ) : (
               <span className="status-badge status-in-stock">Active</span>
             )}
+          </Td>
+          <Td label="Action">
+            {actions.onPayment && p.status === "active" && !p.deleted && (
+              <button type="button" className="sell-btn" disabled={actions.busy} onClick={() => actions.onPayment?.(p)}>
+                + Payment
+              </button>
+            )}
+            <button type="button" className="edit-btn" onClick={() => actions.onHistory(p)}>
+              History
+            </button>
+            {p.deleted
+              ? actions.onRestore && (
+                  <button type="button" className="restore-btn" disabled={actions.busy} onClick={() => actions.onRestore?.(p)}>
+                    Restore
+                  </button>
+                )
+              : actions.onDelete && (
+                  <button type="button" className="delete-btn" disabled={actions.busy} onClick={() => actions.onDelete?.(p)}>
+                    Delete
+                  </button>
+                )}
           </Td>
         </tr>
       ))}
