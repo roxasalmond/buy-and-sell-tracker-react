@@ -33,3 +33,6 @@ firebase-debug.log
 firebase-debug.*.log
 ui-debug.log
 database-debug.log
+
+# Built by npm run reconcile
+.reconcile-out.mjs

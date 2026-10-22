@@ -14,7 +14,8 @@
     "test:rules": "vitest run --config vitest.rules.config.ts",
     "emulators": "firebase emulators:start --only auth,database --project demo-buy-sell",
     "seed": "node scripts/seed-emulator.mjs",
-    "dev:emulator": "vite --mode emulator"
+    "dev:emulator": "vite --mode emulator",
+    "reconcile": "node scripts/run-reconcile.mjs"
   },
   "dependencies": {
     "firebase": "^13.1.0",
