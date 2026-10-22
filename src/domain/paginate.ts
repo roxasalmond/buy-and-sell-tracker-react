@@ -26,3 +26,24 @@ export function paginate<T>(items: readonly T[], page: number, pageSize: number)
     to: start + rows.length,
   };
 }
+
+export type PageItem = number | "ellipsis";
+
+/**
+ * Page buttons to show: always the first and last page, the current page and one on each side.
+ * A gap of one page is filled with that page (no ellipsis hiding a single number); bigger gaps get an ellipsis.
+ */
+export function pageItems(current: number, pageCount: number): PageItem[] {
+  const wanted = new Set<number>([1, pageCount, current - 1, current, current + 1]);
+  const pages = [...wanted].filter((n) => n >= 1 && n <= pageCount).sort((a, b) => a - b);
+
+  const out: PageItem[] = [];
+  let previous = 0;
+  for (const n of pages) {
+    if (n - previous === 2) out.push(previous + 1);
+    else if (n - previous > 2) out.push("ellipsis");
+    out.push(n);
+    previous = n;
+  }
+  return out;
+}

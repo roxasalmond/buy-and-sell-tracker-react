@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paginate } from "./paginate";
+import { pageItems, paginate } from "./paginate";
 
 const items = Array.from({ length: 23 }, (_, i) => i + 1);
 
@@ -25,5 +25,23 @@ describe("paginate", () => {
   it("handles an empty list", () => {
     const p = paginate([], 1, 10);
     expect([p.rows.length, p.page, p.pageCount, p.from, p.to]).toEqual([0, 1, 1, 0, 0]);
+  });
+});
+
+describe("pageItems", () => {
+  it("shows every page when there are few", () => {
+    expect(pageItems(1, 1)).toEqual([1]);
+    expect(pageItems(2, 4)).toEqual([1, 2, 3, 4]);
+  });
+
+  it("collapses long ranges with ellipses", () => {
+    expect(pageItems(1, 20)).toEqual([1, 2, "ellipsis", 20]);
+    expect(pageItems(10, 20)).toEqual([1, "ellipsis", 9, 10, 11, "ellipsis", 20]);
+    expect(pageItems(20, 20)).toEqual([1, "ellipsis", 19, 20]);
+  });
+
+  it("fills a gap of a single page instead of an ellipsis", () => {
+    expect(pageItems(4, 20)).toEqual([1, 2, 3, 4, 5, "ellipsis", 20]);
+    expect(pageItems(6, 7)).toEqual([1, "ellipsis", 5, 6, 7]);
   });
 });
