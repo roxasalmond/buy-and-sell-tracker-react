@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { formatPeso } from "../lib/money";
+import type { CashRow } from "../domain/cashRowChanges";
 import type { Fund, FundReturn, InstallmentRecord, Remit, UnitRecord } from "../domain/schemas";
+import type { CashRowActions } from "../features/entries/useCashRowActions";
+
+type Keyed<T> = T & { key: string };
 
 function Table({ headers, children }: { headers: string[]; children: ReactNode }) {
   return (
@@ -164,29 +168,57 @@ export function SoldTable({ rows }: { rows: UnitRecord[] }) {
   );
 }
 
-export function FundsTable({ rows }: { rows: (Fund | FundReturn)[] }) {
+function CashButtons({ row, actions }: { row: CashRow; actions: CashRowActions }) {
+  return row.deleted ? (
+    <button type="button" className="restore-btn" disabled={actions.busy} onClick={() => actions.onRestore(row)}>
+      Restore
+    </button>
+  ) : (
+    <>
+      <button type="button" className="edit-btn" disabled={actions.busy} onClick={() => actions.onEdit(row)}>
+        Edit
+      </button>
+      <button type="button" className="delete-btn" disabled={actions.busy} onClick={() => actions.onDelete(row)}>
+        Delete
+      </button>
+    </>
+  );
+}
+
+/** `actions` is undefined while saving is switched off: no Action column then. */
+export function FundsTable({ rows, actions }: { rows: Keyed<Fund | FundReturn>[]; actions?: CashRowActions | undefined }) {
   return (
-    <Table headers={["Transaction ID", "Date", "Amount", "Description"]}>
-      {rows.map((f, i) => (
-        <tr key={`${f.transactionId}-${i}`} className={rowClass(f.deleted)}>
+    <Table headers={["Transaction ID", "Date", "Amount", "Description", ...(actions ? ["Action"] : [])]}>
+      {rows.map((f) => (
+        <tr key={f.key} className={rowClass(f.deleted)}>
           <Td label="Transaction ID">{f.transactionId}</Td>
           <Td label="Date">{f.date || "N/A"}</Td>
           <Td label="Amount" className="income">{`+${formatPeso(f.amount)}`}</Td>
           <Td label="Description">{f.type === "fund-return" ? `Return from: ${f.unitName}` : "Fund Added"}</Td>
+          {actions && (
+            <Td label="Action">
+              {f.type === "fund" ? <CashButtons row={f} actions={actions} /> : <span className="muted">Part of a sale</span>}
+            </Td>
+          )}
         </tr>
       ))}
     </Table>
   );
 }
 
-export function RemitsTable({ rows }: { rows: Remit[] }) {
+export function RemitsTable({ rows, actions }: { rows: Keyed<Remit>[]; actions?: CashRowActions | undefined }) {
   return (
-    <Table headers={["Transaction ID", "Date", "Amount"]}>
-      {rows.map((r, i) => (
-        <tr key={`${r.transactionId}-${i}`} className={rowClass(r.deleted)}>
+    <Table headers={["Transaction ID", "Date", "Amount", ...(actions ? ["Action"] : [])]}>
+      {rows.map((r) => (
+        <tr key={r.key} className={rowClass(r.deleted)}>
           <Td label="Transaction ID">{r.transactionId}</Td>
           <Td label="Date">{r.date || "N/A"}</Td>
           <Td label="Amount" className="expense">{`-${formatPeso(r.amount)}`}</Td>
+          {actions && (
+            <Td label="Action">
+              <CashButtons row={r} actions={actions} />
+            </Td>
+          )}
         </tr>
       ))}
     </Table>

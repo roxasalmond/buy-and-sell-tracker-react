@@ -27,7 +27,8 @@ export async function executePlan<R>(
   }
 
   try {
-    const ids = await reserveIds(plan.idCount);
+    // Edits, deletes and restores create no rows, so they need no ids.
+    const ids = plan.idCount > 0 ? await reserveIds(plan.idCount) : [];
     const result = plan.build(ids);
     const root = ref(db, "transactions");
     const updates = buildUpdates(toWrites(result), () => {

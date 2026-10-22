@@ -12,6 +12,9 @@ import {
   unitsInStock,
 } from "../domain/views";
 import type { DateRange, PlanStatusFilter, UnitStatusFilter } from "../domain/views";
+import { writesEnabled } from "../data/writes";
+import { EditCashModal } from "../features/entries/EditCashModal";
+import { useCashRowActions } from "../features/entries/useCashRowActions";
 import { Filters } from "./Filters";
 import { FundsTable, InstallmentsTable, RemitsTable, SoldTable, UnitsTable } from "./HistoryTables";
 import { Pagination } from "./Pagination";
@@ -44,6 +47,8 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
   const [tab, setTab] = useState<TabId>("units");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(9);
+  const cash = useCashRowActions();
+  const cashActions = writesEnabled ? cash.actions : undefined;
   const [photo, setPhoto] = useState<{ url: string; name: string } | null>(null);
 
   const [unitRange, setUnitRange] = useState<DateRange>(NO_DATE_RANGE);
@@ -94,6 +99,15 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
           ))}
         </div>
 
+        {cash.notice && (
+          <p className={cash.notice.ok ? "entry-message ok notice" : "entry-message error notice"} role="status">
+            {cash.notice.text}{" "}
+            <button type="button" className="notice-close" onClick={cash.clearNotice} aria-label="Dismiss">
+              &times;
+            </button>
+          </p>
+        )}
+
         {tab === "units" && (
           <Filters
             dateLabel="Purchased"
@@ -117,8 +131,8 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
 
         {tab === "units" && <UnitsTable rows={rowsOf(units)} onPhoto={(url, name) => setPhoto({ url, name })} />}
         {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} />}
-        {tab === "funds" && <FundsTable rows={rowsOf(funds)} />}
-        {tab === "remits" && <RemitsTable rows={rowsOf(remits)} />}
+        {tab === "funds" && <FundsTable rows={rowsOf(funds)} actions={cashActions} />}
+        {tab === "remits" && <RemitsTable rows={rowsOf(remits)} actions={cashActions} />}
         {tab === "sold" && <SoldTable rows={rowsOf(sold)} />}
         <Pagination
           page={page}
@@ -130,6 +144,7 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
           }}
         />
       </section>
+      {cash.editing && <EditCashModal row={cash.editing} onSave={cash.saveEdit} onClose={cash.closeEdit} />}
       {photo && <PhotoModal url={photo.url} name={photo.name} onClose={() => setPhoto(null)} />}
     </main>
   );

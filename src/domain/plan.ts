@@ -18,7 +18,9 @@ export type RefusalReason =
   | "plan-completed"
   | "overpayment-needs-confirmation"
   | "unit-missing"
-  | "installment-money-locked";
+  | "installment-money-locked"
+  | "entry-deleted"
+  | "entry-not-deleted";
 
 export interface Refusal {
   ok: false;

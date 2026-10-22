@@ -1204,3 +1204,110 @@ table {
 .entry-message.error {
   color: var(--danger-color);
 }
+
+/* Edit dialog and notices */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-modal-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 16px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-content);
+  color: var(--text-on-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-card h3 {
+  font-size: 18px;
+}
+
+.modal-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.modal-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal-card input {
+  padding: 10px 12px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-cancel {
+  padding: 10px 16px;
+  background: var(--bg-summary);
+  color: var(--text-on-light);
+  border: 1px solid #c8c8b8;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notice {
+  padding: 8px 4px 0;
+  flex-shrink: 0;
+}
+
+.notice-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.edit-btn:disabled,
+.delete-btn:disabled,
+.restore-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Deleted rows: dim the data, but keep the Restore button at full strength. */
+tr.deleted-row {
+  opacity: 1;
+}
+
+tr.deleted-row td:not([data-label="Action"]) {
+  opacity: 0.4;
+}
+
+tr.deleted-row td[data-label="Action"] {
+  text-decoration: none;
+}
