@@ -1,0 +1,47 @@
+/* ==================== CSS VARIABLES ==================== */
+:root {
+  /* Background colors */
+  --bg-dark: #0a0a0a;
+  --bg-card: #111111;
+  --bg-black: #000000;
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #222222;
+  --bg-hover: #333333;
+  --bg-content: #ececde;
+  --bg-summary: #f5f5f5;
+  --bg-modal-overlay: rgba(0, 0, 0, 0.7);
+  
+  /* Border colors */
+  --border-color: #222222;
+  
+  /* Text colors */
+  --text-primary: #ffffff; /* White text for dark backgrounds */
+  --text-on-light: #000000; /* Black text for light backgrounds */
+  --text-secondary: #888888;
+  --text-tertiary: #555555;
+  --text-muted: #aaaaaa;
+  --text-disabled: #666666;
+  --placeholder-color: #666666;
+  
+  /* Accent colors */
+  --accent-primary: #0ad43d;
+  --accent-hover: #09ff46;
+  --accent-dark: #000000;
+  
+  /* Status colors */
+  --danger-color: #ee0505;
+  --danger-hover: #cc0404;
+  --error-bg: #ff4444;
+  --info-color: #2196f3;
+  --info-hover: #1976d2;
+  
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+}

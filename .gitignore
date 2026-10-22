@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+.vercel/
+.firebase/
+
+# Environment files (copy .env.example to .env.local)
+.env
+.env.*
+!.env.example
+
+# DATABASE EXPORTS AND BACKUPS: buyer names, IMEIs and money records.
+# This repo is public. Keep exports outside this folder (for example D:\Backups\).
+*-rtdb-export-*.json
+*export*.json
+*backup*.json
+*.csv
+*.xlsx
+*.xls
+# The scrubbed test fixture is the only data file allowed in the repo:
+!tests/fixtures/scrubbed-*.json
+
+# Keys and secrets
+*.pem
+serviceAccount*.json
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.log
