@@ -181,3 +181,6 @@ export function parseTransactions(raw: unknown): ParseResult {
   }
   return { records, errors };
 }
+
+export type UnitRecord = Unit & { key: string };
+export type InstallmentRecord = Installment & { key: string };
