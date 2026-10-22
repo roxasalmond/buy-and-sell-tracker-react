@@ -1,0 +1,933 @@
+/* Dashboard layout, ported from the live app (base, sidebar, tables, activity, responsive). */
+.main-container { background-color: var(--bg-black); }
+.main-container {
+  display: grid;
+  grid-template-columns: 390px 1fr;
+  grid-template-rows: auto 300px;
+  grid-template-areas:
+    "sidebar main"
+    "activity activity";
+  gap: 20px;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sidebar {
+  grid-area: sidebar;
+}
+
+.main-content {
+  grid-area: main;
+}
+
+.activity-history {
+  grid-area: activity;
+}
+
+.main-content {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-content);
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background-color: var(--danger-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-normal);
+}
+
+.logout-btn:hover {
+  background-color: var(--danger-hover);
+}
+.sidebar {
+  width: 390px;
+  background-color: var(--bg-content);
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  color: var(--text-on-light);
+}
+
+.header {
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-on-light);
+}
+
+.title span {
+  color: var(--accent-primary);
+}
+
+/* Balance Summary */
+.balance-summary {
+  background-color: var(--bg-summary);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 25px;
+}
+
+.balance-summary .title h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: var(--text-on-light);
+}
+
+.balance-summary .label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.balance-summary .label:last-child {
+  margin-bottom: 0;
+}
+
+.total-value,
+.total-fund {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+/* Income Summary */
+.income-summary {
+  background-color: var(--bg-summary);
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.income-summary > div {
+  flex: 1;
+}
+
+.income-summary .label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.income-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+/* History Tab Buttons */
+.history-tab-btn {
+  padding: 12px 24px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  margin-bottom: -2px;
+}
+
+.history-tab-btn:hover {
+  color: var(--text-on-light);
+}
+
+.history-tab-btn.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.history-tab-content {
+  display: none;
+}
+
+.history-tab-content.active {
+  display: block;
+}
+
+.transaction-history h2 {
+  color: var(--text-on-light);
+}
+
+/* Table Body Styles */
+#fundsTableBody td,
+#remitsTableBody td {
+  font-weight: 500;
+  
+}
+
+.income {
+  color: var(--accent-primary);
+}
+
+.expense {
+  color: var(--error-bg);
+}
+
+.transaction-section {
+  display: none;
+}
+
+.transaction-section.active {
+  display: block;
+}
+
+tr.deleted-row {
+  opacity: 0.4;
+  background-color: var(--bg-primary);
+  text-decoration: line-through;
+}
+
+/* Button Styles */
+.delete-btn,
+button[onclick*="deleteTransaction"] {
+  padding: 6px 12px;
+  background-color: var(--danger-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  margin-right: 8px;
+}
+
+.delete-btn:hover,
+button[onclick*="deleteTransaction"]:hover {
+  background-color: var(--danger-hover);
+}
+
+.restore-btn,
+.sell-btn {
+  padding: 6px 12px;
+  background-color: var(--accent-primary);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  margin-right: 8px;
+}
+
+.restore-btn:hover,
+.sell-btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.edit-btn {
+  padding: 6px 12px;
+  background-color: var(--info-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  margin-right: 8px;
+}
+
+.edit-btn:hover {
+  background-color: var(--info-hover);
+}
+
+/* Status Badges */
+.status-in-stock {
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+}
+
+.status-sold,
+.status-badge {
+  padding: 5px 12px;
+  background-color: var(--accent-primary);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  align-items: center;
+  justify-content: center;
+}
+
+/* Table Structure */
+
+.table-wrapper {
+  max-height: 925px;
+  overflow-y: auto;
+}
+
+.transaction-table thead {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-content);
+}
+
+table {
+  border-spacing: 0 10px !important;
+  border-collapse: separate;
+}
+
+.transaction-history {
+  width: 100%;
+}
+
+.transaction-table {
+  width: 100%;
+  table-layout: auto;
+  
+}
+
+.transaction-table tbody tr {
+  width: 100%;
+}
+
+.transaction-table th,
+.transaction-table td {
+  padding: 12px 15px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Table Header */
+.transaction-table thead th {
+  padding: 10px 15px;
+  text-align: left;
+  background-color: transparent;
+  color: var(--text-on-light);
+  white-space: nowrap;
+}
+
+/* Table Body Cells */
+.transaction-table tbody tr td {
+  background-color: var(--bg-summary);
+  padding: 12px 15px;
+  text-align: left;
+  color: var(--text-on-light);
+}
+
+/* First cell - left rounded corners */
+.transaction-table tbody tr td:first-child {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* Last cell - right rounded corners */
+.transaction-table tbody tr td:last-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.status-overdue {
+  padding: 5px 12px;
+  background-color: #ff4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Unit Photo Thumbnail */
+.unit-photo-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.unit-photo-thumbnail:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Photo Modal */
+.photo-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s;
+}
+
+.photo-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.photo-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  font-size: 32px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.photo-modal-close:hover {
+  background: #cc0000;
+}
+
+.photo-modal-image {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+.photo-modal-caption {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Photo Upload Cell */
+.photo-upload-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-upload-input {
+  display: none;
+}
+
+.photo-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--accent-primary);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.photo-upload-btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.photo-upload-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.transaction-table td[data-label="Action"],
+.transaction-table td[data-label="Status"] {
+  white-space: nowrap;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.activity-history {
+  display: flex;
+  flex-direction: column;
+  max-height: 30vh;
+  padding: 20px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  overflow-y: auto;
+}
+
+.activity-history h2 {
+  margin-bottom: 15px;
+  color: var(--text-primary);
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.activity-time {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.activity-user {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.activity-action {
+  color: var(--text-primary);
+}
+
+.activity-item-name {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.activity-id {
+  color: var(--text-disabled);
+  font-size: 12px;
+}
+
+.no-activity {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px;
+}
+/* Large screens - Compact mode */
+@media (max-width: 1800px) {
+  .sidebar {
+    width: 100%;
+  }
+
+  .main-container {
+    gap: 10px;
+  }
+
+  .transaction-table th,
+  .transaction-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .edit-btn,
+  .sell-btn,
+  .delete-btn,
+  .restore-btn,
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+    margin-right: 4px;
+  }
+
+  .sold-input {
+    width: 70px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .transaction-table td[data-label="Status"],
+  .transaction-table td[data-label="Action"],
+  .transaction-table th {
+    white-space: nowrap;
+  }
+}
+
+/* Medium screens - Stack layout */
+@media (max-width: 1350px) {
+  .main-container {
+    grid-template-areas:
+      "sidebar"
+      "main"
+      "activity";
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .main-content {
+    padding: 20px;
+    width: 100%;
+  }
+
+  .transaction-history,
+  .transaction-table {
+    width: 100%;
+  }
+
+  /* Restore Transaction ID when stacked */
+  .transaction-table th:first-child,
+  .transaction-table td:first-child {
+    display: table-cell;
+  }
+
+  .transaction-table td[data-label="Status"],
+  .transaction-table td[data-label="Action"] {
+    white-space: nowrap;
+  }
+}
+
+/* Mobile - Horizontal card slider */
+@media (max-width: 768px) {
+  .main-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "sidebar"
+      "main"
+      "activity";
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .main-content {
+    padding: 10px;
+  }
+
+  .form-type-selector {
+    flex-direction: column;
+  }
+
+  .income-summary {
+    flex-direction: column;
+  }
+
+  /* Mobile Table - Horizontal Cards */
+  .transaction-table {
+    display: block;
+    border-spacing: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .transaction-table thead {
+    display: none !important;
+  }
+
+  .transaction-table tbody {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .transaction-table tbody::-webkit-scrollbar {
+    display: none;
+  }
+
+  .transaction-table tbody tr {
+    min-width: 85vw;
+    max-width: 85vw;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    display: block;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  /* Horizontal label + value layout */
+  .transaction-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+    width: 100%;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    gap: 10px;
+  }
+
+  .transaction-table tbody td:first-child,
+  .transaction-table tbody td:last-child {
+    border-radius: 0 !important;
+  }
+
+  .transaction-table tbody td:last-child {
+    border-bottom: none;
+  }
+
+  /* Label styling */
+  .transaction-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+    flex-shrink: 0;
+    min-width: 90px;
+  }
+
+  /* Value area */
+  .transaction-table tbody td {
+    text-align: right;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Sold For cell with input and button */
+  .transaction-table tbody td[data-label="Sold For"] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .transaction-table tbody td[data-label="Sold For"] .sold-input {
+    flex: 1;
+    max-width: 80px;
+    margin-right: 8px;
+  }
+
+  .transaction-table tbody td[data-label="Sold For"] .sell-btn {
+    flex-shrink: 0;
+  }
+
+  /* Action buttons stacked vertically */
+  .transaction-table tbody td[data-label="Action"] {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .transaction-table tbody td[data-label="Action"]::before {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 4px;
+  }
+
+  .transaction-table tbody td[data-label="Action"] button {
+    width: 100%;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Activity History Mobile */
+  .activity-history {
+    width: 100%;
+    padding: 15px;
+    margin-top: 0;
+  }
+
+  .activity-history h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .activity-list {
+    max-height: 300px;
+  }
+
+  .activity-item {
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .activity-time {
+    font-size: 10px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .activity-user {
+    font-size: 12px;
+  }
+
+  .activity-item-name {
+    display: inline;
+    font-size: 11px;
+  }
+
+  .activity-id {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+  }
+}
+/* Added for the React version */
+.history-tabs { display: flex; flex-wrap: wrap; border-bottom: 2px solid #d4d4c4; margin-bottom: 8px; }
+.add-unit h3 { font-size: 18px; margin-bottom: 20px; font-weight: 600; color: var(--text-on-light); }
+.coming-soon { font-size: 13px; color: var(--text-secondary); }
+.status-text { color: var(--text-secondary); padding: 20px; }
+.form-type-selector { display: flex; gap: 8px; margin-bottom: 25px; }
+.form-btn { flex: 1; padding: 12px 10px; background-color: var(--bg-primary); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; }
+.form-btn.active { background-color: var(--accent-primary); color: #000; border-color: var(--accent-primary); font-weight: 600; }
+.activity-list { list-style: none; }
+.photo-modal-close { font-family: inherit; }
+@media (max-width: 768px) {
+  .form-type-selector { flex-direction: column; }
+  .history-tab-btn { padding: 10px 12px; }
+}
+
+/* Desktop: sidebar and main panel never exceed the viewport.
+   The sidebar scrolls as a whole; in the main panel the title and tabs stay put and only the table scrolls. */
+@media (min-width: 1351px) {
+  .sidebar {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  .main-content {
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .transaction-history {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .history-tabs,
+  .pagination,
+  .transaction-history h2 {
+    flex-shrink: 0;
+  }
+
+  .table-wrapper {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
+/* Same row height in every tab so a page always has the same shape. */
+.transaction-table tbody tr td {
+  height: 68px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.unit-photo-thumbnail {
+  width: 52px;
+  height: 52px;
+  display: block;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 8px 4px 0;
+  font-size: 13px;
+  color: var(--text-on-light);
+}
+
+.pagination button,
+.pagination select {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #c8c8b8;
+  background: var(--bg-summary);
+  color: var(--text-on-light);
+  font-size: 13px;
+}
+
+.pagination button {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .transaction-table tbody tr td {
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-size {
+    margin-left: 0;
+  }
+}

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RequireAuth } from "./auth/RequireAuth";
+import { TransactionsProvider } from "./data/TransactionsProvider";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 
@@ -14,7 +15,9 @@ export default function App() {
             path="/"
             element={
               <RequireAuth>
-                <DashboardPage />
+                <TransactionsProvider>
+                  <DashboardPage />
+                </TransactionsProvider>
               </RequireAuth>
             }
           />
