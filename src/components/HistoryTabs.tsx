@@ -1,10 +1,21 @@
 import { useMemo, useState } from "react";
 import type { TransactionRecord } from "../domain/schemas";
 import { paginate } from "../domain/paginate";
-import { fundRows, installmentPlans, remitRows, soldUnits, unitsInStock } from "../domain/views";
+import {
+  filterPlans,
+  filterUnits,
+  fundRows,
+  installmentPlans,
+  NO_DATE_RANGE,
+  remitRows,
+  soldUnits,
+  unitsInStock,
+} from "../domain/views";
+import type { DateRange, PlanStatusFilter, UnitStatusFilter } from "../domain/views";
+import { Filters } from "./Filters";
 import { FundsTable, InstallmentsTable, RemitsTable, SoldTable, UnitsTable } from "./HistoryTables";
-import { PhotoModal } from "./PhotoModal";
 import { Pagination } from "./Pagination";
+import { PhotoModal } from "./PhotoModal";
 
 const TABS = [
   { id: "units", label: "Available Units" },
@@ -16,32 +27,51 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+const UNIT_STATUS = [
+  { value: "all", label: "All" },
+  { value: "in-stock", label: "In stock" },
+  { value: "deleted", label: "Deleted" },
+] as const satisfies readonly { value: UnitStatusFilter; label: string }[];
+
+const PLAN_STATUS = [
+  { value: "all", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "deleted", label: "Deleted" },
+] as const satisfies readonly { value: PlanStatusFilter; label: string }[];
+
 export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
   const [tab, setTab] = useState<TabId>("units");
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(9);
   const [photo, setPhoto] = useState<{ url: string; name: string } | null>(null);
 
-  const units = useMemo(() => unitsInStock(records), [records]);
-  const plans = useMemo(() => installmentPlans(records), [records]);
+  const [unitRange, setUnitRange] = useState<DateRange>(NO_DATE_RANGE);
+  const [unitStatus, setUnitStatus] = useState<UnitStatusFilter>("all");
+  const [planRange, setPlanRange] = useState<DateRange>(NO_DATE_RANGE);
+  const [planStatus, setPlanStatus] = useState<PlanStatusFilter>("all");
+
+  const units = useMemo(() => filterUnits(unitsInStock(records), unitRange, unitStatus), [records, unitRange, unitStatus]);
+  const plans = useMemo(
+    () => filterPlans(installmentPlans(records), planRange, planStatus),
+    [records, planRange, planStatus],
+  );
   const funds = useMemo(() => fundRows(records), [records]);
   const remits = useMemo(() => remitRows(records), [records]);
   const sold = useMemo(() => soldUnits(records), [records]);
 
-  const page = paginate(
-    { units, installments: plans, funds, remits, sold }[tab] as readonly unknown[],
-    pageNumber,
-    pageSize,
-  );
-  const slice = <T,>(rows: T[]) => paginate(rows, pageNumber, pageSize).rows;
-  const unitRows = slice(units);
-  const planRows = slice(plans);
-  const fundPageRows = slice(funds);
-  const remitPageRows = slice(remits);
-  const soldRows = slice(sold);
+  const lists = { units, installments: plans, funds, remits, sold };
+  const page = paginate(lists[tab] as readonly unknown[], pageNumber, pageSize);
+  const rowsOf = <T,>(rows: T[]) => paginate(rows, pageNumber, pageSize).rows;
 
   const selectTab = (id: TabId) => {
     setTab(id);
+    setPageNumber(1);
+  };
+
+  /** Any filter change goes back to page 1. */
+  const resetPage = <A,>(set: (value: A) => void) => (value: A) => {
+    set(value);
     setPageNumber(1);
   };
 
@@ -64,11 +94,32 @@ export function HistoryTabs({ records }: { records: TransactionRecord[] }) {
           ))}
         </div>
 
-        {tab === "units" && <UnitsTable rows={unitRows} onPhoto={(url, name) => setPhoto({ url, name })} />}
-        {tab === "installments" && <InstallmentsTable rows={planRows} />}
-        {tab === "funds" && <FundsTable rows={fundPageRows} />}
-        {tab === "remits" && <RemitsTable rows={remitPageRows} />}
-        {tab === "sold" && <SoldTable rows={soldRows} />}
+        {tab === "units" && (
+          <Filters
+            dateLabel="Purchased"
+            range={unitRange}
+            onRange={resetPage(setUnitRange)}
+            status={unitStatus}
+            statusOptions={UNIT_STATUS}
+            onStatus={resetPage(setUnitStatus)}
+          />
+        )}
+        {tab === "installments" && (
+          <Filters
+            dateLabel="Next due"
+            range={planRange}
+            onRange={resetPage(setPlanRange)}
+            status={planStatus}
+            statusOptions={PLAN_STATUS}
+            onStatus={resetPage(setPlanStatus)}
+          />
+        )}
+
+        {tab === "units" && <UnitsTable rows={rowsOf(units)} onPhoto={(url, name) => setPhoto({ url, name })} />}
+        {tab === "installments" && <InstallmentsTable rows={rowsOf(plans)} />}
+        {tab === "funds" && <FundsTable rows={rowsOf(funds)} />}
+        {tab === "remits" && <RemitsTable rows={rowsOf(remits)} />}
+        {tab === "sold" && <SoldTable rows={rowsOf(sold)} />}
         <Pagination
           page={page}
           pageSize={pageSize}

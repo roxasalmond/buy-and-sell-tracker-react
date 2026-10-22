@@ -829,16 +829,19 @@ table {
   .history-tab-btn { padding: 10px 12px; }
 }
 
-/* Desktop: sidebar and main panel never exceed the viewport.
+/* Desktop: sidebar and main panel are exactly one viewport tall.
    The sidebar scrolls as a whole; in the main panel the title and tabs stay put and only the table scrolls. */
 @media (min-width: 1351px) {
+  .sidebar,
+  .main-content {
+    height: calc(100vh - 40px);
+  }
+
   .sidebar {
-    max-height: calc(100vh - 40px);
     overflow-y: auto;
   }
 
   .main-content {
-    max-height: calc(100vh - 40px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -847,7 +850,7 @@ table {
   .transaction-history {
     display: flex;
     flex-direction: column;
-    flex: 0 1 auto;
+    flex: 1;
     min-height: 0;
   }
 
@@ -858,7 +861,7 @@ table {
   }
 
   .table-wrapper {
-    flex: 0 1 auto;
+    flex: 1;
     min-height: 0;
     max-height: none;
     overflow-y: auto;
@@ -929,5 +932,50 @@ table {
 
   .pagination-size {
     margin-left: 0;
+  }
+}
+
+/* Filter bar above the Units and Installments tables */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px 0;
+  font-size: 13px;
+  color: var(--text-on-light);
+  flex-shrink: 0;
+}
+
+.filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filters input,
+.filters select,
+.filters button {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #c8c8b8;
+  background: var(--bg-summary);
+  color: var(--text-on-light);
+  font-size: 13px;
+}
+
+.filters button {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters label {
+    justify-content: space-between;
   }
 }

@@ -1,4 +1,4 @@
-export const PAGE_SIZES = [10, 25, 50] as const;
+export const PAGE_SIZES = [9, 18, 27] as const;
 
 export interface Page<T> {
   rows: T[];

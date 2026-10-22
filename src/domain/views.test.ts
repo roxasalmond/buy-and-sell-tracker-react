@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { buildActivity } from "./activity";
 import { computeSummary } from "./summary";
-import { fundRows, installmentPlans, remitRows, soldUnits, txnNumber, unitsInStock } from "./views";
+import {
+  filterPlans,
+  filterUnits,
+  fundRows,
+  inDateRange,
+  installmentPlans,
+  NO_DATE_RANGE,
+  remitRows,
+  soldUnits,
+  txnNumber,
+  unitsInStock,
+} from "./views";
 import { records } from "./testFixture";
 
 describe("tab views", () => {
@@ -33,5 +44,31 @@ describe("activity feed", () => {
     expect(items.length).toBeLessThanOrEqual(20);
     const times = items.map((a) => a.timestamp);
     expect(times).toEqual([...times].sort((a, b) => b - a));
+  });
+});
+
+describe("filters", () => {
+  it("date range is inclusive and open-ended when empty", () => {
+    expect(inDateRange("2026-10-15", NO_DATE_RANGE)).toBe(true);
+    expect(inDateRange("2026-10-15", { from: "2026-10-15", to: "2026-10-15" })).toBe(true);
+    expect(inDateRange("2026-10-14", { from: "2026-10-15", to: "" })).toBe(false);
+    expect(inDateRange("2026-10-16", { from: "", to: "2026-10-15" })).toBe(false);
+    expect(inDateRange(undefined, { from: "2026-01-01", to: "" })).toBe(false);
+  });
+
+  it("filters units by purchase date", () => {
+    const rows = unitsInStock(records);
+    const out = filterUnits(rows, { from: "2026-08-01", to: "2026-08-31" }, "all");
+    expect(out.every((u) => u.date >= "2026-08-01" && u.date <= "2026-08-31")).toBe(true);
+    expect(filterUnits(rows, NO_DATE_RANGE, "all")).toHaveLength(rows.length);
+  });
+
+  it("filters plans by status and the lists add up", () => {
+    const rows = installmentPlans(records);
+    const active = filterPlans(rows, NO_DATE_RANGE, "active");
+    const completed = filterPlans(rows, NO_DATE_RANGE, "completed");
+    const deleted = filterPlans(rows, NO_DATE_RANGE, "deleted");
+    expect(active.every((p) => p.status === "active" && !p.deleted)).toBe(true);
+    expect(active.length + completed.length + deleted.length).toBe(rows.length);
   });
 });

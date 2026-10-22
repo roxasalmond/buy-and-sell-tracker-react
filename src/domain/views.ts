@@ -62,3 +62,43 @@ export function remitRows(records: readonly TransactionRecord[]): WithKey<Remit>
   }
   return newestFirst(rows);
 }
+
+/** Inclusive date range on YYYY-MM-DD strings. An empty end means "no limit". */
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+export const NO_DATE_RANGE: DateRange = { from: "", to: "" };
+
+export function inDateRange(date: string | undefined, range: DateRange): boolean {
+  if (!range.from && !range.to) return true;
+  if (!date) return false;
+  if (range.from && date < range.from) return false;
+  if (range.to && date > range.to) return false;
+  return true;
+}
+
+export type UnitStatusFilter = "all" | "in-stock" | "deleted";
+export type PlanStatusFilter = "all" | "active" | "completed" | "deleted";
+
+/** Units tab: filter by purchase date and by deleted or not. */
+export function filterUnits(rows: UnitRecord[], range: DateRange, status: UnitStatusFilter): UnitRecord[] {
+  return rows.filter((u) => {
+    if (!inDateRange(u.date, range)) return false;
+    if (status === "in-stock") return !u.deleted;
+    if (status === "deleted") return u.deleted === true;
+    return true;
+  });
+}
+
+/** Installments tab: filter by next due date and by plan status. */
+export function filterPlans(rows: InstallmentRecord[], range: DateRange, status: PlanStatusFilter): InstallmentRecord[] {
+  return rows.filter((p) => {
+    if (!inDateRange(p.nextDueDate, range)) return false;
+    if (status === "deleted") return p.deleted === true;
+    if (status === "active") return !p.deleted && p.status === "active";
+    if (status === "completed") return !p.deleted && p.status === "completed";
+    return true;
+  });
+}
