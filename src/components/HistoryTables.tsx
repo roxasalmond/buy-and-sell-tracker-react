@@ -3,6 +3,8 @@ import { formatPeso } from "../lib/money";
 import type { CashRow } from "../domain/cashRowChanges";
 import type { Fund, FundReturn, InstallmentRecord, Remit, UnitRecord } from "../domain/schemas";
 import type { CashRowActions } from "../features/entries/useCashRowActions";
+import type { SellActions } from "../features/sales/useSellUnit";
+import { SellBox } from "./SellBox";
 
 type Keyed<T> = T & { key: string };
 
@@ -42,10 +44,19 @@ function Clamp({ text }: { text: string }) {
 
 const rowClass = (deleted: boolean | undefined) => (deleted ? "deleted-row" : undefined);
 
-export function UnitsTable({ rows, onPhoto }: { rows: UnitRecord[]; onPhoto: (url: string, name: string) => void }) {
+export function UnitsTable({
+  rows,
+  onPhoto,
+  sell,
+}: {
+  rows: UnitRecord[];
+  onPhoto: (url: string, name: string) => void;
+  /** Undefined while saving is switched off: the column then shows the suggested price. */
+  sell?: SellActions | undefined;
+}) {
   return (
     <Table
-      headers={["Transaction ID", "Unit Name", "IMEI", "Condition", "Date", "Cost", "Suggested Price", "Status", "Photo"]}
+      headers={["Transaction ID", "Unit Name", "IMEI", "Condition", "Date", "Cost", sell ? "Sold For" : "Suggested Price", "Status", "Photo"]}
     >
       {rows.map((u) => (
         <tr key={u.key} className={rowClass(u.deleted)}>
@@ -57,7 +68,13 @@ export function UnitsTable({ rows, onPhoto }: { rows: UnitRecord[]; onPhoto: (ur
           <Td label="Condition">{u.condition}</Td>
           <Td label="Date">{u.date}</Td>
           <Td label="Cost">{formatPeso(u.cost)}</Td>
-          <Td label="Suggested Price">{u.suggestedPrice === undefined ? "-" : formatPeso(u.suggestedPrice)}</Td>
+          {sell ? (
+            <Td label="Sold For">
+              <SellBox unit={u} actions={sell} />
+            </Td>
+          ) : (
+            <Td label="Suggested Price">{u.suggestedPrice === undefined ? "-" : formatPeso(u.suggestedPrice)}</Td>
+          )}
           <Td label="Status">
             <span className="status-badge status-in-stock">In Stock</span>
           </Td>

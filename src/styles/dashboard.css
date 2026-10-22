@@ -1311,3 +1311,39 @@ tr.deleted-row td:not([data-label="Action"]) {
 tr.deleted-row td[data-label="Action"] {
   text-decoration: none;
 }
+
+/* Sell box in the Available Units table */
+.sell-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sell-box .sold-input {
+  width: 110px;
+  padding: 6px 8px;
+  font-size: 13px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.sell-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sell-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sell-error {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--danger-color);
+  white-space: normal;
+  max-width: 220px;
+}

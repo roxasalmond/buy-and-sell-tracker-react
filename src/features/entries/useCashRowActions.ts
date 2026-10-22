@@ -5,6 +5,7 @@ import { planDeleteCashRow, planEditCashRow, planRestoreCashRow } from "../../do
 import type { CashChange, CashRow } from "../../domain/cashRowChanges";
 import type { PlanResult } from "../../domain/plan";
 import { toLocalDateString } from "../../lib/dates";
+import type { Notice } from "../notice";
 
 export interface CashRowActions {
   busy: boolean;
@@ -13,17 +14,11 @@ export interface CashRowActions {
   onRestore: (row: CashRow) => void;
 }
 
-export interface Notice {
-  ok: boolean;
-  text: string;
-}
-
 /** Edit / delete / restore for fund and remit rows. Owns the open edit dialog and the status message. */
-export function useCashRowActions() {
+export function useCashRowActions(setNotice: (notice: Notice | null) => void) {
   const { user } = useAuth();
   const [editing, setEditing] = useState<CashRow | null>(null);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<Notice | null>(null);
 
   const context = () =>
     user?.email ? { today: toLocalDateString(), now: Date.now(), email: user.email } : null;
@@ -70,5 +65,5 @@ export function useCashRowActions() {
     return error;
   }
 
-  return { actions, editing, closeEdit: () => setEditing(null), saveEdit, notice, clearNotice: () => setNotice(null) };
+  return { actions, editing, closeEdit: () => setEditing(null), saveEdit };
 }
