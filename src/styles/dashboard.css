@@ -979,3 +979,22 @@ table {
     justify-content: space-between;
   }
 }
+
+/* Long names: two lines, then an ellipsis. Cards on phones show the full text. */
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .clamp {
+    display: inline;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    overflow: visible;
+  }
+}

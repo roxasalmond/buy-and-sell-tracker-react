@@ -27,6 +27,15 @@ function Td({ label, className, children }: { label: string; className?: string;
   );
 }
 
+/** Two lines at most on desktop; the full text is in the tooltip. Phone cards show everything. */
+function Clamp({ text }: { text: string }) {
+  return (
+    <span className="clamp" title={text}>
+      {text}
+    </span>
+  );
+}
+
 const rowClass = (deleted: boolean | undefined) => (deleted ? "deleted-row" : undefined);
 
 export function UnitsTable({ rows, onPhoto }: { rows: UnitRecord[]; onPhoto: (url: string, name: string) => void }) {
@@ -37,7 +46,9 @@ export function UnitsTable({ rows, onPhoto }: { rows: UnitRecord[]; onPhoto: (ur
       {rows.map((u) => (
         <tr key={u.key} className={rowClass(u.deleted)}>
           <Td label="Transaction ID">{u.transactionId}</Td>
-          <Td label="Unit Name">{u.name}</Td>
+          <Td label="Unit Name">
+            <Clamp text={u.name} />
+          </Td>
           <Td label="IMEI">{u.imei || "-"}</Td>
           <Td label="Condition">{u.condition}</Td>
           <Td label="Date">{u.date}</Td>
@@ -84,8 +95,12 @@ export function InstallmentsTable({ rows }: { rows: InstallmentRecord[] }) {
       {rows.map((p) => (
         <tr key={p.key} className={rowClass(p.deleted)}>
           <Td label="Transaction ID">{p.transactionId}</Td>
-          <Td label="Unit Name">{p.unitName}</Td>
-          <Td label="Buyer Name">{p.buyerName}</Td>
+          <Td label="Unit Name">
+            <Clamp text={p.unitName} />
+          </Td>
+          <Td label="Buyer Name">
+            <Clamp text={p.buyerName} />
+          </Td>
           <Td label="Unit Cost">{formatPeso(p.originalCost)}</Td>
           <Td label="Installment Price">{formatPeso(p.totalPrice)}</Td>
           <Td label="Down Payment">{formatPeso(p.downPayment)}</Td>
@@ -128,7 +143,9 @@ export function SoldTable({ rows }: { rows: UnitRecord[] }) {
         return (
           <tr key={u.key} className={rowClass(u.deleted)}>
             <Td label="Transaction ID">{u.transactionId}</Td>
-            <Td label="Unit Name">{u.name}</Td>
+            <Td label="Unit Name">
+            <Clamp text={u.name} />
+          </Td>
             <Td label="IMEI">{u.imei || "-"}</Td>
             <Td label="Condition">{u.condition}</Td>
             <Td label="Date Purchased">{u.date}</Td>
